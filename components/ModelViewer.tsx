@@ -12,7 +12,7 @@
  * Design: Matches Apple Retail aesthetic with subtle loading states.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 // Extend JSX types for model-viewer custom element
 declare global {
@@ -134,24 +134,54 @@ export default function ModelViewer({
   aspectRatio = 1,
 }: ModelViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [isModelViewerLoaded, setIsModelViewerLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [canActivateAR, setCanActivateAR] = useState(false);
+  const modelViewerRef = useRef<HTMLElement | null>(null);
 
-  // Load model-viewer script
+  // Attach event listeners after component mounts
   useEffect(() => {
-    if (typeof window !== 'undefined' && !customElements.get('model-viewer')) {
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js';
-      script.onload = () => setIsModelViewerLoaded(true);
-      document.head.appendChild(script);
-    } else {
-      setIsModelViewerLoaded(true);
-    }
-  }, []);
+    // Wait a bit for model-viewer to be ready
+    const timer = setTimeout(() => {
+      const modelViewer = document.querySelector(`model-viewer[src="${src}"]`) as HTMLElement | null;
+      modelViewerRef.current = modelViewer;
+      
+      if (modelViewer) {
+        const handleLoad = () => {
+          setIsLoading(false);
+          // Check if AR is available on this device
+          if ((modelViewer as any).canActivateAR) {
+            setCanActivateAR(true);
+          }
+        };
+        const handleError = () => {
+          setHasError(true);
+          setIsLoading(false);
+        };
+        
+        modelViewer.addEventListener('load', handleLoad);
+        modelViewer.addEventListener('error', handleError);
+        
+        return () => {
+          modelViewer.removeEventListener('load', handleLoad);
+          modelViewer.removeEventListener('error', handleError);
+        };
+      }
+    }, 100);
+    
+    // Timeout fallback - hide spinner after 8s
+    const timeout = setTimeout(() => setIsLoading(false), 8000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timeout);
+    };
+  }, [src]);
 
-  // Handle model load event
-  const handleLoad = () => {
-    setIsLoading(false);
+  // Handle AR button click
+  const handleARClick = () => {
+    if (modelViewerRef.current) {
+      (modelViewerRef.current as any).activateAR();
+    }
   };
 
   return (
@@ -169,8 +199,8 @@ export default function ModelViewer({
         />
       )}
 
-      {/* Model Viewer */}
-      {isModelViewerLoaded && (
+      {/* Model Viewer - always render, script is loaded globally in layout */}
+      {!hasError && (
         <model-viewer
           src={src}
           poster={poster}
@@ -196,10 +226,8 @@ export default function ModelViewer({
           shadow-softness="1"
           exposure="0.9"
           // Loading
-          loading="lazy"
+          loading="eager"
           reveal="auto"
-          // Event handlers
-          onLoad={handleLoad}
           // Styling
           style={{
             width: '100%',
@@ -209,12 +237,19 @@ export default function ModelViewer({
         />
       )}
 
-      {/* Loading State */}
-      {isLoading && <LoadingSpinner />}
+      {/* Error State */}
+      {hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-apple-gray-100">
+          <p className="text-apple-gray-500 text-sm">Failed to load 3D model</p>
+        </div>
+      )}
 
-      {/* Custom AR Button (shown when AR is available) */}
-      {enableAR && !isLoading && (
-        <ARButton />
+      {/* Loading State */}
+      {isLoading && !hasError && <LoadingSpinner />}
+
+      {/* Custom AR Button (shown when AR is available on device) */}
+      {enableAR && !isLoading && !hasError && canActivateAR && (
+        <ARButton onClick={handleARClick} />
       )}
     </div>
   );
