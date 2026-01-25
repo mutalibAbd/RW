@@ -1,0 +1,35 @@
+{
+  "name": "zero-cost-gallery",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "optimize": "node scripts/optimize.js",
+    "optimize:check": "node scripts/optimize.js && ls -lh public/models/"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "@supabase/ssr": "^0.1.0"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "^4.0.0",
+    "@gltf-transform/extensions": "^4.0.0",
+    "@gltf-transform/functions": "^4.0.0",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.17",
+    "draco3dgltf": "^1.5.7",
+    "postcss": "^8.4.35",
+    "sharp": "^0.33.0",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.0"
+  }
+}
