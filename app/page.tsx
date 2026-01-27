@@ -6,6 +6,23 @@ import { getSupabaseClient } from '@/utils/supabase/client';
 import type { Product } from '@/types/database.types';
 
 /**
+ * Helper to prefix asset URLs with basePath for GitHub Pages
+ * In development: /models/file.glb
+ * In production (GitHub Pages): /RW/models/file.glb
+ */
+function getAssetUrl(path: string): string {
+  // If it's an external URL, return as-is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  // Get basePath from Next.js config (injected at build time)
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+  // Ensure path starts with /
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${basePath}${normalizedPath}`;
+}
+
+/**
  * Fallback product data for development/empty database
  * Will be used if Supabase returns no products
  */
@@ -75,13 +92,17 @@ function ProductCard({ product }: { product: Product }) {
   // Extract tags from metadata safely
   const tags = (product.metadata as { tags?: string[] })?.tags ?? [];
   
+  // Apply basePath to asset URLs for GitHub Pages compatibility
+  const glbUrl = getAssetUrl(product.glb_url);
+  const posterUrl = product.poster_url ? getAssetUrl(product.poster_url) : undefined;
+  
   return (
     <article className="group card-apple p-0 overflow-hidden">
       {/* 3D Model Viewer */}
       <div className="aspect-square bg-apple-offwhite">
         <ModelViewer
-          src={product.glb_url}
-          poster={product.poster_url ?? undefined}
+          src={glbUrl}
+          poster={posterUrl}
           alt={product.name}
           enableAR={true}
           enableControls={false} // Disabled in grid view per frontend.md

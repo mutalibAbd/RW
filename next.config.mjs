@@ -3,6 +3,10 @@ const nextConfig = {
   // Enable static export for GitHub Pages deployment
   output: 'export',
 
+  // GitHub Pages deploys to /RW/ subdirectory
+  basePath: '/RW',
+  assetPrefix: '/RW/',
+
   // Enable React Strict Mode for better development experience
   reactStrictMode: true,
 
