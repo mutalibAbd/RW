@@ -1,5 +1,8 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import ModelViewer from '@/components/ModelViewer';
-import { createSupabaseServerClient } from '@/utils/supabase/server';
+import { getSupabaseClient } from '@/utils/supabase/client';
 import type { Product } from '@/types/database.types';
 
 /**
@@ -23,34 +26,45 @@ const FALLBACK_PRODUCTS: Product[] = [
 ];
 
 /**
- * Fetch products from Supabase with SWR-style caching
- * Uses Next.js built-in caching with revalidation
+ * Custom hook to fetch products from Supabase
+ * Handles loading states and errors gracefully
  */
-async function getProducts(): Promise<Product[]> {
-  try {
-    const supabase = await createSupabaseServerClient();
-    
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching products:', error.message);
-      return FALLBACK_PRODUCTS;
+function useProducts() {
+  const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const supabase = getSupabaseClient();
+        
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching products:', error.message);
+          setError(error.message);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          setProducts(data as Product[]);
+        }
+      } catch (err) {
+        console.error('Failed to connect to Supabase:', err);
+        setError('Failed to connect to database');
+      } finally {
+        setIsLoading(false);
+      }
     }
-    
-    // Return fallback if no products in database
-    if (!data || data.length === 0) {
-      console.log('No products in database, using fallback');
-      return FALLBACK_PRODUCTS;
-    }
-    
-    return data as Product[];
-  } catch (error) {
-    console.error('Failed to connect to Supabase:', error);
-    return FALLBACK_PRODUCTS;
-  }
+
+    fetchProducts();
+  }, []);
+
+  return { products, isLoading, error };
 }
 
 /**
@@ -243,17 +257,39 @@ function Footer() {
 
 /**
  * Home Page - Apple Retail Style
- * Server Component that fetches products from Supabase
+ * Client Component that fetches products from Supabase on the client side
+ * Compatible with static export for GitHub Pages
  */
-export default async function HomePage() {
-  // Fetch products from Supabase (or fallback data)
-  const products = await getProducts();
+export default function HomePage() {
+  const { products, isLoading } = useProducts();
   
   return (
     <>
       <NavBar />
       <HeroSection />
-      <ProductGrid products={products} />
+      {isLoading ? (
+        <section className="px-6 pb-24">
+          <div className="max-w-7xl mx-auto text-center">
+            <div className="animate-pulse space-y-4">
+              <div className="h-8 bg-apple-gray-200 rounded w-1/3 mx-auto"></div>
+              <div className="h-4 bg-apple-gray-100 rounded w-1/2 mx-auto"></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="card-apple p-0 overflow-hidden">
+                    <div className="aspect-square bg-apple-gray-100"></div>
+                    <div className="p-6 space-y-3">
+                      <div className="h-5 bg-apple-gray-200 rounded w-3/4"></div>
+                      <div className="h-4 bg-apple-gray-100 rounded w-full"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <ProductGrid products={products} />
+      )}
       <Footer />
     </>
   );
