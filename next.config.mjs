@@ -3,9 +3,8 @@ const nextConfig = {
   // Enable static export for GitHub Pages deployment
   output: 'export',
 
-  // GitHub Pages deploys to /RW/ subdirectory
-  basePath: '/RW',
-  assetPrefix: '/RW/',
+  // Note: With custom domain (abdvr.page), no basePath needed
+  // basePath is only needed for github.io/repo-name URLs
 
   // Enable React Strict Mode for better development experience
   reactStrictMode: true,
