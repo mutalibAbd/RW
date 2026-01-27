@@ -12,16 +12,16 @@ import type { Product } from '@/types/database.types';
 const FALLBACK_PRODUCTS: Product[] = [
   {
     id: 'fallback-1',
-    name: 'Sample House',
+    name: 'Small House',
     description: 'Optimized 3D model ready for WebAR',
-    // Test with external model first to verify model-viewer works
-    glb_url: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+    // Use local optimized model from public/models
+    glb_url: '/models/small-house.glb',
     poster_url: null,
     file_size_bytes: 23000,
     draco_compressed: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    metadata: { tags: ['demo', 'test'] },
+    metadata: { tags: ['house', 'demo'] },
   },
 ];
 
