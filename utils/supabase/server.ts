@@ -67,22 +67,21 @@ export async function createSupabaseServerClient() {
 
 /**
  * Create a Supabase admin client that bypasses RLS.
- * 
+ *
  * ⚠️ SECURITY WARNING: This client uses the service role key and bypasses
  * all Row Level Security policies. Use ONLY for:
- * - System operations (Keep-Alive pulse)
  * - Admin tasks that require elevated privileges
- * - Background jobs / cron tasks
- * 
+ * - Background jobs / system operations
+ *
  * NEVER expose this client to user-facing code or the frontend!
- * 
+ *
  * @example
  * ```typescript
  * import { createSupabaseAdminClient } from '@/utils/supabase/server';
- * 
- * // In /api/system/pulse/route.ts
+ *
+ * // In admin API routes only
  * const supabase = createSupabaseAdminClient();
- * await supabase.from('system_health').update({ last_check: new Date().toISOString() });
+ * await supabase.from('products').update({ ... });
  * ```
  */
 export function createSupabaseAdminClient() {
