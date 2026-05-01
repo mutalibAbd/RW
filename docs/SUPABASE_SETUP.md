@@ -38,18 +38,17 @@ If you want to understand each part, run the schema in these sections:
 
 #### Section 1: Create Tables
 ```sql
--- Run lines 17-51 (system_health table)
--- Then run lines 53-98 (products table)
+-- Run the products table creation section
 ```
 
 #### Section 2: Enable RLS
 ```sql
--- Run lines 100-142 (RLS policies)
+-- Run the RLS policies section
 ```
 
 #### Section 3: Create Functions & Triggers
 ```sql
--- Run lines 144-167 (updated_at trigger)
+-- Run the updated_at trigger section
 ```
 
 ---
@@ -60,9 +59,7 @@ After running the migration, verify that the tables were created:
 
 ### Check Tables
 1. In the left sidebar, click **Table Editor**
-2. You should see two tables:
-   - `system_health`
-   - `products`
+2. You should see the `products` table
 
 ### Check RLS Policies
 1. Click on the `products` table
@@ -101,13 +98,15 @@ You'll need these for your Next.js app:
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1...
    ```
 
-### Get Service Role Key (For Keep-Alive API)
+### Get Service Role Key (Optional - For Admin Features)
 
 **⚠️ SECURITY WARNING**: The service role key bypasses RLS. Never expose it to the client!
 
+If you plan to implement admin features that require elevated privileges:
+
 1. In **Settings** → **API**, scroll down to **Service role**
 2. Click **"Reveal"** and copy the key
-3. Add to `.env.local` (this will be used by `/api/system/pulse`):
+3. Add to `.env.local`:
    ```bash
    SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1...
    ```
@@ -139,14 +138,6 @@ SELECT * FROM public.products;
 ```
 
 You should see your test product returned.
-
-### Test the Keep-Alive Table
-
-```sql
-SELECT * FROM public.system_health;
-```
-
-You should see one row with `status = 'healthy'`.
 
 ---
 
@@ -189,9 +180,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 ## Next Steps
 
 1. **Connect Next.js App**: Use the Supabase URL and anon key in your app
-2. **Set Up Keep-Alive**: Create the `/api/system/pulse` route (Backend Agent)
-3. **Create GitHub Action**: Schedule the cron job to ping `/api/system/pulse` every 48 hours
-4. **Add Products**: Start uploading 3D models to your gallery!
+2. **Add Products**: Start uploading 3D models to your gallery!
 
 ---
 
@@ -199,22 +188,14 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 ### RLS Philosophy: "Deny All, Whitelist Specific"
 
-- **Public**: Can READ products and system_health
+- **Public**: Can READ products
 - **Authenticated**: Can INSERT, UPDATE, DELETE products
-- **Service Role**: Can UPDATE system_health (for Keep-Alive)
-
-### Keep-Alive Strategy
-
-The `system_health` table is updated by the `/api/system/pulse` endpoint. This ensures:
-1. Supabase sees "database activity" every 48 hours
-2. The project never pauses (avoids 7-day inactivity timeout)
-3. No manual intervention required
 
 ### Free Tier Compliance
 
 - **Max DB Size**: 500MB (enforced via file size limits in app logic)
 - **Max Connections**: Limited (use connection pooling in Supabase client)
-- **Pausing**: Prevented via Keep-Alive mechanism
+- **Note**: Supabase free tier projects may pause after 7 days of inactivity
 
 ---
 
